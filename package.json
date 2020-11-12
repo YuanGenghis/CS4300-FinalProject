@@ -1,0 +1,25 @@
+{
+  "name": "cs4300-finalproject",
+  "version": "1.0.0",
+  "description": "CS4300 final project\r Members:\r Jisiyuan Cheng\r Yan Chen",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YuanGenghis/CS4300-FinalProject.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YuanGenghis/CS4300-FinalProject/issues"
+  },
+  "homepage": "https://github.com/YuanGenghis/CS4300-FinalProject#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
