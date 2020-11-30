@@ -1,14 +1,3 @@
-// const doMouseDown = (event) => {
-//     const boundingRectangle = canvas.getBoundingClientRect();
-//     const x = event.clientX - boundingRectangle.left;
-//     const y = event.clientY - boundingRectangle.top;
-//     const translation = {x, y}
-//     // const center = {position: {x, y}}
-//     const shape = document.querySelector("input[name='shape']:checked").value
-//
-//     addShape(translation, shape)
-// }
-
 const doMouseDown = (event) => {
     const boundingRectangle = canvas.getBoundingClientRect();
     const x =  Math.round(event.clientX
