@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>A WebGL Mini CAD</title>
+    <title>CS4300 Final</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
     <style>canvas {border: 1px solid gray;}</style>
     <script src="m4.js" type="application/javascript"></script>
@@ -12,30 +12,26 @@
     <script src="graphics.js"></script>
     <style>
         canvas {border: 1px solid gray;}
-        .column-3 {
-            width: calc(3 * 100% / 12);
+        .column {
             float: left;
+            width: 50%;
         }
-        .column-6 {
-            width: calc(6 * 100% /12);
-            float: left;
+        .column-3 {
+            float: right;
+            width: 25%;
+        }
+        .row {
+            content: "";
+            display: table;
+            clear: both;
         }
     </style>
 </head>
 
 <body onload="init();render()">
 
-<div class="column-3"></div>
-
-<div class="column-6">
-    <canvas id="canvas" width="500px" height="200px"></canvas><br/>
-</div>
-
-<div class="column-3">
-    <h2>Object List</h2>
-    <ol id="object-list">
-    </ol>
-
+<div class="column">
+    <canvas id="canvas" width="1000px" height="500px"></canvas><br/>
 </div>
 
 <div class = column-3>
@@ -55,40 +51,48 @@
     Z: <input id="crz" type="number" value="0" step="2"/><br/>
     <br/>
 
-        <h2>Translation</h2>
-        X: <input id="tx" type="number" value="0" step="5"/><br/>
-        Y: <input id="ty" type="number" value="0" step="5"/><br/>
-        Z: <input id="tz" type="number" value="0" step="5"/><br/>
+    <h2>Light Direction</h2>
+    X: <input id="dlrx" type="range" value="0" min="-1" max="1" step="0.1"/>
+    <br/>
+    Y: <input id="dlry" type="range" value="0" min="-1" max="1" step="0.1"/>
+    <br/>
+    Z: <input id="dlrz" type="range" value="0" min="-1" max="1" step="0.1"/>
+    <br/>
+
+    <h2>Translation</h2>
+    X: <input id="tx" type="number" value="0" step="5"/><br/>
+    Y: <input id="ty" type="number" value="0" step="5"/><br/>
+    Z: <input id="tz" type="number" value="0" step="5"/><br/>
 
 
-        <h2>Scaling</h2>
-        X: <input id="sx" type="number" value="1" step="0.5"/><br/>
-        X: <input id="sy" type="number" value="1" step="0.5"/><br/>
-        Z: <input id="sz" type="number" value="1" step="0.2"/><br/>
+    <h2>Scaling</h2>
+    X: <input id="sx" type="number" value="1" step="0.5"/><br/>
+    X: <input id="sy" type="number" value="1" step="0.5"/><br/>
+    Z: <input id="sz" type="number" value="1" step="0.2"/><br/>
 
 
-        <h2>Rotation</h2>
-        X: <input id="rx" type="number" value="0" step="2"/><br/>
-        Y: <input id="ry" type="number" value="0" step="2"/><br/>
-        Z: <input id="rz" type="number" value="0" step="2"/><br/>
+    <h2>Rotation</h2>
+    X: <input id="rx" type="number" value="0" step="2"/><br/>
+    Y: <input id="ry" type="number" value="0" step="2"/><br/>
+    Z: <input id="rz" type="number" value="0" step="2"/><br/>
 
-        <h2>Field of view</h2>
-        X: <input id="fv" type="number" value="0" step="2"/><br/>
+    <h2>Field of view</h2>
+    X: <input id="fv" type="number" value="0" step="2"/><br/>
 
-        <h2>Color</h2>
-        <input id="color" type="color"><br/>
+    <h2>Color</h2>
+    <input id="color" type="color"><br/>
 
+</div>
 
-
+<div class="column">
+    <h2>Object List</h2>
+    <ol id="object-list">
+    </ol>
+    <h2>Type</h2>
     <label>
         <input type="radio" name="shape"
-               value="RECTANGLE" checked/>
-        Rectangle
-    </label>
-    <label>
-        <input type="radio" name="shape"
-               value="TRIANGLE"/>
-        Triangle
+               value="CUBE"/>
+        Cube
     </label>
     <label>
         <input type="radio" name="shape"
@@ -100,34 +104,57 @@
                value="STAR"/>
         Star
     </label>
-    <label>
-        <input type="radio" name="shape"
-               value="CUBE"/>
-        CUBE
-    </label>
 
 </div>
 
 
+<!--<script id="vertex-shader-3d" type="x-shader/x-vertex">-->
+<!-- attribute vec4 a_coords;-->
+<!--  uniform mat4 u_matrix;-->
+<!--  uniform vec4 u_color;-->
+<!--  varying vec4 v_color;-->
+<!--  void main() {-->
+<!--    // Multiply the position by the matrix.-->
+<!--    gl_Position = u_matrix * a_coords;-->
+<!--    v_color = u_color;-->
+<!--  }-->
+<!--</script>-->
+
 <script id="vertex-shader-3d" type="x-shader/x-vertex">
- attribute vec4 a_coords;
-  uniform mat4 u_matrix;
-  uniform vec4 u_color;
-  varying vec4 v_color;
-  void main() {
-    // Multiply the position by the matrix.
-    gl_Position = u_matrix * a_coords;
-    v_color = u_color;
-  }
+attribute vec4 a_coords;
+attribute vec3 a_normals;
+uniform mat4 u_worldViewProjection;
+uniform mat4 u_worldInverseTranspose;
+varying vec3 v_normal;
+void main() {
+   gl_Position = u_worldViewProjection * a_coords;
+   v_normal = mat3(u_worldInverseTranspose) * a_normals;
+
+}
 </script>
 
+<!--<script id="fragment-shader-3d" type="x-shader/x-fragment">-->
+<!--  precision mediump float;-->
+<!--  varying vec4 v_color;-->
+<!--  void main() {-->
+<!--    gl_FragColor = v_color;-->
+<!--  }-->
+<!--</script>-->
 
 <script id="fragment-shader-3d" type="x-shader/x-fragment">
-  precision mediump float;
-  varying vec4 v_color;
-  void main() {
-    gl_FragColor = v_color;
-  }
+    precision mediump float;
+    varying vec3 v_normal;
+
+    uniform vec3 u_reverseLightDirection;
+    uniform vec4 u_color;
+
+    void main() {
+        vec3 normal = normalize(v_normal);
+        float light = dot(normal, u_reverseLightDirection);
+
+        gl_FragColor = u_color;
+        gl_FragColor.rgb *= light;
+    }
 </script>
 
 

@@ -17,6 +17,13 @@ const doMouseDown = (event) => {
 
 
 
+let attributeNormals
+let uniformWorldViewProjection
+let uniformWorldInverseTranspose
+let uniformReverseLightDirectionLocation
+let normalBuffer
+let lightSource = [0.4, 0.3, 0.5]
+
 const up = [0, 1, 0]
 let target = [0, 0, 0]
 let lookAt = true
@@ -36,46 +43,28 @@ const RECTANGLE = "RECTANGLE"
 const TRIANGLE = "TRIANGLE"
 const LETTER_F = "LETTER_F"
 const STAR = "STAR"
+const SPHERE = "SPHERE"
 const CIRCLE = "CIRCLE"
 const CUBE = "CUBE"
 const origin = {x: 0, y: 0, z: 0}
 const sizeOne = {width: 1, height: 1, depth: 1}
 
 let camera = {
-    translation: {x: 10, y: 10, z: 50},
-    rotation: {x: 0, y: 180, z: 0}
+    translation: {x: 500, y: 50, z: 500},
+    rotation: {x: 0, y: 0, z: 0}
 }
-
-let lightSource = [0.4, 0.3, 0.5]
 
 let shapes = [
     {
         type: CUBE,
         position: origin,
         dimensions: sizeOne,
-        color: BLUE_RGB,
-        translation: {x:  0, y: 0, z: 0},
-        scale:       {x:   0.5, y:   0.5, z:   0.5},
-        rotation:    {x:   0, y:  0, z:   0},
-    },
-    {
-        type: CUBE,
-        position: origin,
-        dimensions: sizeOne,
         color: GREEN_RGB,
-        translation: {x: 20, y: 0, z: 0},
-        scale:       {x:   0.5, y:   0.5, z:   0.5},
+        translation: {x:  0, y: 0, z: 0},
+        scale:       {x:   20, y:   0.1, z:   20},
         rotation:    {x:   0, y:  0, z:   0},
     },
-    {
-        type: CUBE,
-        position: origin,
-        dimensions: sizeOne,
-        color: RED_RGB,
-        translation:  {x: -20, y: 0, z: 0},
-        scale:       {x:   0.5, y:   0.5, z:   0.5},
-        rotation:     {x: 0, y: 0, z: 0}
-    }
+
 ]
 
 
@@ -137,7 +126,22 @@ const init = () => {
 
     // initialize coordinate buffer
     bufferCoords = gl.createBuffer();
+
+    attributeNormals = gl.getAttribLocation(program, "a_normals");
+    gl.enableVertexAttribArray(attributeNormals);
+    normalBuffer = gl.createBuffer();
+
+    uniformWorldViewProjection
+        = gl.getUniformLocation(program, "u_worldViewProjection");
+    uniformWorldInverseTranspose
+        = gl.getUniformLocation(program, "u_worldInverseTranspose");
+    uniformReverseLightDirectionLocation
+        = gl.getUniformLocation(program, "u_reverseLightDirection");
+
+
     uniformMatrix = gl.getUniformLocation(program, "u_matrix");
+
+
 
 
     gl.clearColor(0, 0, 0, 0);
@@ -179,6 +183,17 @@ const init = () => {
     document.getElementById("cry").value = camera.rotation.y
     document.getElementById("crz").value = camera.rotation.z
 
+    document.getElementById("dlrx").value = lightSource[0]
+    document.getElementById("dlry").value = lightSource[1]
+    document.getElementById("dlrz").value = lightSource[2]
+
+    document.getElementById("dlrx").onchange
+        = event => webglUtils.updateLightDirection(event, 0)
+    document.getElementById("dlry").onchange
+        = event => webglUtils.updateLightDirection(event, 1)
+    document.getElementById("dlrz").onchange
+        = event => webglUtils.updateLightDirection(event, 2)
+
 
     selectShape(0)
 }
@@ -210,16 +225,6 @@ const updateColor = (event) => {
     render()
 }
 
-// let fieldOfViewRadians = m4.degToRad(60)
-// const computeModelViewMatrix = (canvas, shape, aspect, zNear, zFar) => {
-//     let M = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar)
-//     M = m4.translate(M, shape.translation.x, shape.translation.y, shape.translation.z)
-//     M = m4.xRotate(M, m4.degToRad(shape.rotation.x))
-//     M = m4.yRotate(M, m4.degToRad(shape.rotation.y))
-//     M = m4.zRotate(M, m4.degToRad(shape.rotation.z))
-//     M = m4.scale(M, shape.scale.x, shape.scale.y, shape.scale.z)
-//     return M
-// }
 
 const computeModelViewMatrix = (shape, viewProjectionMatrix) => {
     M = m4.translate(viewProjectionMatrix,
@@ -245,6 +250,9 @@ const render = () => {
         0,           // stride = 0; ==> move forward size * sizeof(type)
         // each iteration to get the next position
         0);          // offset = 0; i.e., start at the beginning of the buffer
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.vertexAttribPointer(attributeNormals, 3, gl.FLOAT, false, 0, 0);
 
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 1;
@@ -291,6 +299,22 @@ const render = () => {
     viewProjectionMatrix = m4.multiply(
         projectionMatrix, cameraMatrix)
 
+    let worldMatrix = m4.identity()
+    const worldViewProjectionMatrix
+        = m4.multiply(viewProjectionMatrix, worldMatrix);
+    const worldInverseMatrix
+        = m4.inverse(worldMatrix);
+    const worldInverseTransposeMatrix
+        = m4.transpose(worldInverseMatrix);
+
+    gl.uniformMatrix4fv(uniformWorldViewProjection, false,
+                        worldViewProjectionMatrix);
+    gl.uniformMatrix4fv(uniformWorldInverseTranspose, false,
+                        worldInverseTransposeMatrix);
+
+    gl.uniform3fv(uniformReverseLightDirectionLocation,
+                  m4.normalize(lightSource));
+
 
 
     shapes.forEach((shape,index) => {
@@ -321,9 +345,11 @@ const render = () => {
 
 
         // let M = computeModelViewMatrix(gl.canvas, shape, aspect, zNear, zFar)
-        let M = computeModelViewMatrix(
-            shape, viewProjectionMatrix)
-        gl.uniformMatrix4fv(uniformMatrix, false, M)
+        // let M = computeModelViewMatrix(
+        //     shape, viewProjectionMatrix)
+        // gl.uniformMatrix4fv(uniformMatrix, false, M)
+        let M = computeModelViewMatrix(shape, worldViewProjectionMatrix)
+        gl.uniformMatrix4fv(uniformWorldViewProjection, false, M)
 
 
         if (shape.type === CUBE) {
@@ -339,6 +365,8 @@ const render = () => {
         }
         else if(shape.type === CIRCLE) {
             renderCircle(shape)
+        } else if (shape.type == SPHERE) {
+            renderSphere(shape)
         }
     })
 }
@@ -468,7 +496,7 @@ const renderCircle = (circle) => {
 }
 
 const renderCube = (cube) => {
-    const geometry = [
+    let geometry=[
         0,  0,  0,    0, 30,  0,   30,  0,  0,
         0, 30,  0,   30, 30,  0,   30,  0,  0,
         0,  0, 30,   30,  0, 30,    0, 30, 30,
@@ -482,8 +510,25 @@ const renderCube = (cube) => {
         30,  0, 30,   30,  0,  0,   30, 30, 30,
         30, 30, 30,   30,  0,  0,   30, 30,  0
     ]
-    const float32Array = new Float32Array(geometry)
-    gl.bufferData(gl.ARRAY_BUFFER, float32Array, gl.STATIC_DRAW)
-    var primitiveType = gl.TRIANGLES;
+    geometry = new Float32Array(geometry)
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferCoords);
+    gl.bufferData(gl.ARRAY_BUFFER, geometry, gl.STATIC_DRAW)
+
+    var normals = new Float32Array([
+                                       0,0, 1,  0,0, 1,  0,0, 1,    0,0, 1,  0,0, 1,  0,0, 1,
+                                       0,0,-1,  0,0,-1,  0,0,-1,    0,0,-1,  0,0,-1,  0,0,-1,
+                                       0,-1,0,  0,-1,0,  0,-1,0,    0,-1,0,  0,-1,0,  0,-1,0,
+                                       0, 1,0,  0, 1,0,  0, 1,0,    0, 1,0,  0, 1,0,  0, 1,0,
+                                       -1, 0,0, -1, 0,0, -1, 0,0,   -1, 0,0, -1, 0,0, -1, 0,0,
+                                       1, 0,0,  1, 0,0,  1, 0,0,    1, 0,0,  1, 0,0,  1 ,0,0,
+                                   ]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+
     gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
 }
+
+const renderSphere = (sphere) => {
+
+}
+
