@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/YuanGenghis/CS4300-FinalProject#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "three": "^0.123.0"
   }
 }

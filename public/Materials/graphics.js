@@ -1,3 +1,4 @@
+
 const doMouseDown = (event) => {
     const boundingRectangle = canvas.getBoundingClientRect();
     const x =  Math.round(event.clientX
@@ -529,6 +530,12 @@ const renderCube = (cube) => {
 }
 
 const renderSphere = (sphere) => {
+    const geometry = new THREE.SphereGeometry( 5, 32, 32 );
+    const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+    const s = new THREE.Mesh( geometry, material );
+    const canvas = document.querySelector("#canvas");
+    canvas.add( s );
+
 
 }
 

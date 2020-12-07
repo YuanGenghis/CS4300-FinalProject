@@ -52,7 +52,7 @@ const webglUtils = {
         render()
     },
     updateCameraAngle: (event) => {
-        cameraAngleRadians = m7.degToRad(event.target.value);
+        cameraAngleRadians = m4.degToRad(event.target.value);
         render();
     },
     updateLookUp: (event) => {
@@ -60,7 +60,7 @@ const webglUtils = {
         render();
     },
     updateFieldOfView: (event) => {
-        fieldOfViewRadians = m7.degToRad(event.target.value);
+        fieldOfViewRadians = m4.degToRad(event.target.value);
         render();
     },
     updateLightDirection: (event, index) => {
@@ -138,7 +138,7 @@ const webglUtils = {
         document.getElementById("rx").value = shapes[selectedIndex].rotation.x
         document.getElementById("ry").value = shapes[selectedIndex].rotation.y
         document.getElementById("rz").value = shapes[selectedIndex].rotation.z
-        document.getElementById("fv").value = m7.radToDeg(fieldOfViewRadians)
+        document.getElementById("fv").value = m4.radToDeg(fieldOfViewRadians)
         const hexColor = webglUtils.rgbToHex(shapes[selectedIndex].color)
         document.getElementById("color").value = hexColor
     },
